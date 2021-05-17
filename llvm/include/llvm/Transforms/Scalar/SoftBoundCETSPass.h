@@ -62,7 +62,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -78,19 +78,19 @@
 
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/Support/InstIterator.h"
+#include "llvm/IR/InstIterator.h"
 
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/IR/CallSite.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 
@@ -101,17 +101,17 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/Support/InstIterator.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/Support/TargetFolder.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
+#include "llvm/IR/InstIterator.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetFolder.h"
+#include "llvm/Support/SpecialCaseList.h"
 
 
 #include<queue>
 
 using namespace llvm;
 
-typedef IRBuilder<true, TargetFolder> BuilderTy;
+typedef IRBuilder<> BuilderTy;
 
 class SoftBoundCETSPass: public ModulePass {
 
@@ -120,7 +120,7 @@ class SoftBoundCETSPass: public ModulePass {
   const TargetLibraryInfo *TLI;
   BuilderTy *Builder;
   SmallString<64> BlacklistFile;
-  OwningPtr<SpecialCaseList> Blacklist;
+  std::unique_ptr<SpecialCaseList> Blacklist;
 
   bool spatial_safety;
   bool temporal_safety;
@@ -452,28 +452,27 @@ class SoftBoundCETSPass: public ModulePass {
   
   Instruction* getNextInstruction(Instruction* I){
     
-    if (isa<TerminatorInst>(I)) {
+    if (I->isTerminator()) {
       return I;
     } else {
-      BasicBlock::iterator i = I;
-      return ++i;
-    }    
+      return I->getNextNonDebugInstruction();
+    }
   }
-  
+
   const Type* getStructType(const Type*);
   Value*  getSizeOfType(Type*);
-  
+
   Value* castToVoidPtr(Value*, Instruction*);
   bool checkGEPOfInterestSB(GetElementPtrInst*);
-  void handleReturnInst(ReturnInst*);    
-  
+  void handleReturnInst(ReturnInst*);
+
  public:
   static char ID;
 
   /* INITIALIZE_PASS(SoftBoundCETSPass, "softboundcetspass", */
   /*               "SoftBound CETS for memory safety", false, false) */
-    
-    
+
+
  SoftBoundCETSPass(StringRef BlacklistFile = "")
    : ModulePass(ID),
     BlacklistFile(BlacklistFile){
@@ -483,14 +482,13 @@ class SoftBoundCETSPass: public ModulePass {
     initializeSoftBoundCETSPass(*PassRegistry::getPassRegistry());
 #endif
   }
-  const char* getPassName() const { return " SoftBoundCETSPass";}
+  StringRef getPassName() const { return " SoftBoundCETSPass";}
 
 
   void getAnalysisUsage(AnalysisUsage& au) const {
-    au.addRequired<DominatorTree>();
-    au.addRequired<LoopInfo>();
-    au.addRequired<DataLayout>();
-    au.addRequired<TargetLibraryInfo>();
+    au.addRequired<DominatorTreeWrapperPass>();
+    au.addRequired<LoopInfoWrapperPass>();
+    au.addRequired<TargetLibraryInfoWrapperPass>();
   }
 
 

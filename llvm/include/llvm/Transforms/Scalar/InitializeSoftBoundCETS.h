@@ -34,7 +34,7 @@ class InitializeSoftBoundCETS: public ModulePass {
     temporal_safety= true;
   }
   
-  const char* getPassName() const { return "InitializeSoftBoundCETS";}
+  StringRef getPassName() const { return "InitializeSoftBoundCETS";}
 };
 
 #endif

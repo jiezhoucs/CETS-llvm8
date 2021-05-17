@@ -42,6 +42,8 @@
 #include "llvm/Transforms/Scalar/SimpleLoopUnswitch.h"
 #include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Vectorize.h"
+#include "llvm/Transforms/Scalar/InitializeSoftBoundCETS.h"
+#include "llvm/Transforms/Scalar/SoftBoundCETSPass.h"
 
 using namespace llvm;
 
@@ -432,6 +434,8 @@ void PassManagerBuilder::populateModulePassManager(
 
   // Allow forcing function attributes as a debugging and tuning aid.
   MPM.add(createForceFunctionAttrsLegacyPass());
+
+  MPM.add(new SoftBoundCETSPass());
 
   // If all optimizations are disabled, just run the always-inline pass and,
   // if enabled, the function merging pass.
