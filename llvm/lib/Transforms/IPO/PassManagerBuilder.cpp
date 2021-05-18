@@ -162,6 +162,11 @@ static cl::opt<bool>
     EnableCHR("enable-chr", cl::init(true), cl::Hidden,
               cl::desc("Enable control height reduction optimization (CHR)"));
 
+// SoftBoundCETS
+static cl::opt<bool> EnableSoftBoundCETS(
+    "enable-softboundcets", cl::init(false), cl::Hidden,
+    cl::desc("Enable the SoftBoundCETS pass"));
+
 PassManagerBuilder::PassManagerBuilder() {
     OptLevel = 2;
     SizeLevel = 0;
@@ -435,7 +440,11 @@ void PassManagerBuilder::populateModulePassManager(
   // Allow forcing function attributes as a debugging and tuning aid.
   MPM.add(createForceFunctionAttrsLegacyPass());
 
-  MPM.add(new SoftBoundCETSPass());
+  // SoftBoundCETS
+  if (EnableSoftBoundCETS) {
+    MPM.add(new InitializeSoftBoundCETS());
+    MPM.add(new SoftBoundCETSPass());
+  }
 
   // If all optimizations are disabled, just run the always-inline pass and,
   // if enabled, the function merging pass.

@@ -406,12 +406,14 @@ void SoftBoundCETSPass::initializeSoftBoundVariables(Module& module) {
     }
   }
 
-  m_metadata_load_vector_func = module.getFunction("__softboundcets_metadata_load_vector");
-  assert(m_metadata_load_vector_func && "__softboundcets_metadata_load_vector null?");
+  if (spatial_safety && temporal_safety) {
+    m_metadata_load_vector_func = module.getFunction("__softboundcets_metadata_load_vector");
+    assert(m_metadata_load_vector_func && "__softboundcets_metadata_load_vector null?");
 
-  m_metadata_store_vector_func = module.getFunction("__softboundcets_metadata_store_vector");
-  assert(m_metadata_store_vector_func && "__softboundcets_metadata_store_vector null?");
-  
+    m_metadata_store_vector_func = module.getFunction("__softboundcets_metadata_store_vector");
+    assert(m_metadata_store_vector_func && "__softboundcets_metadata_store_vector null?");
+  }
+
   m_load_base_bound_func = module.getFunction("__softboundcets_metadata_load");
   assert(m_load_base_bound_func && "__softboundcets_metadata_load null?");
   
@@ -679,16 +681,16 @@ void SoftBoundCETSPass::transformMain(Module& module) {
   const FunctionType* fty = main_func->getFunctionType();
   std::vector<Type*> params;
 
-#if 0
+#if 1
   SmallVector<AttributeSet, 8> param_attrs_vec;
-  const AttributeList& pal = main_func->getAttributes();
+  /* const AttributeList& pal = main_func->getAttributes(); */
 
   //
   // Get the attributes of the return value
   //
 
-  if(pal.hasAttributes(AttributeList::ReturnIndex))
-    param_attrs_vec.push_back(AttributeSet::get(main_func->getContext(), pal.getRetAttributes()));
+  /* if(pal.hasAttributes(AttributeList::ReturnIndex)) */
+  /*   param_attrs_vec.push_back(AttributeSet::get(main_func->getContext(), pal.getRetAttributes())); */
 
   // Get the attributes of the arguments 
   int arg_index = 1;
@@ -697,44 +699,44 @@ void SoftBoundCETSPass::transformMain(Module& module) {
       i != e; ++i, arg_index++) {
     params.push_back(i->getType());
 
-    AttributeSet attrs = pal.getParamAttributes(arg_index);
+    /* AttributeSet attrs = pal.getParamAttributes(arg_index); */
 
-    if(attrs.hasAttributes()){
-      AttrBuilder B(attrs);
-      param_attrs_vec.push_back(AttributeSet::get(main_func->getContext(), B));
-    }
+    /* if(attrs.hasAttributes()){ */
+    /*   AttrBuilder B(attrs); */
+    /*   param_attrs_vec.push_back(AttributeSet::get(main_func->getContext(), B)); */
+    /* } */
   }
 #endif
 
   FunctionType* nfty = FunctionType::get(ret_type, params, fty->isVarArg());
   Function* new_func = NULL;
 
-  // create the new function 
-  new_func = Function::Create(nfty, main_func->getLinkage(), 
+  // create the new function
+  new_func = Function::Create(nfty, main_func->getLinkage(),
                               "softboundcets_pseudo_main");
 
-  // set the new function attributes 
+  // set the new function attributes
   new_func->copyAttributesFrom(main_func);
   new_func->setAttributes(main_func->getAttributes());
-    
+
   main_func->getParent()->getFunctionList().insert(Module::iterator(main_func), new_func);
   main_func->replaceAllUsesWith(new_func);
 
-  // 
+  //
   // Splice the instructions from the old function into the new
   // function and set the arguments appropriately
-  // 
-  new_func->getBasicBlockList().splice(new_func->begin(), 
+  //
+  new_func->getBasicBlockList().splice(new_func->begin(),
                                        main_func->getBasicBlockList());
   Function::arg_iterator arg_i2 = new_func->arg_begin();
-  for(Function::arg_iterator arg_i = main_func->arg_begin(), 
-        arg_e = main_func->arg_end(); 
-      arg_i != arg_e; ++arg_i) {      
+  for(Function::arg_iterator arg_i = main_func->arg_begin(),
+        arg_e = main_func->arg_end();
+      arg_i != arg_e; ++arg_i) {
     arg_i->replaceAllUsesWith(arg_i2);
     arg_i2->takeName(arg_i);
     ++arg_i2;
     /* arg_index++; */
-  }  
+  }
   //
   // Remove the old function from the module
   //
@@ -2634,8 +2636,8 @@ void SoftBoundCETSPass::addMemcopyMemsetCheck(CallInst* call_inst,
 }
 
 //
-// Method: getSizeOfType 
-// 
+// Method: getSizeOfType
+//
 // Description: This function returns the size of the memory access
 // based on the type of the pointer which is being dereferenced.  This
 // function is used to pass the size of the access in many checks to
@@ -2643,14 +2645,14 @@ void SoftBoundCETSPass::addMemcopyMemsetCheck(CallInst* call_inst,
 //
 // Comments: May we should use TargetData instead of m_is_64_bit
 // according Criswell's comments.
- 
+
 
 Value* SoftBoundCETSPass:: getSizeOfType(Type* input_type) {
 
   // Create a Constant Pointer Null of the input type.  Then get a
   // getElementPtr of it with next element access cast it to unsigned
   // int
-   
+
   const PointerType* ptr_type = dyn_cast<PointerType>(input_type);
 
   if (isa<FunctionType>(ptr_type->getElementType())) {
@@ -2664,20 +2666,20 @@ Value* SoftBoundCETSPass:: getSizeOfType(Type* input_type) {
   const SequentialType* seq_type = dyn_cast<SequentialType>(input_type);
   Constant* int64_size = NULL;
   assert(seq_type && "pointer dereference and it is not a sequential type\n");
-  
+
   StructType* struct_type = dyn_cast<StructType>(input_type);
 
   if(struct_type){
     if(struct_type->isOpaque()){
       if(m_is_64_bit) {
-        return ConstantInt::get(Type::getInt64Ty(seq_type->getContext()), 0);        
+        return ConstantInt::get(Type::getInt64Ty(seq_type->getContext()), 0);
       }
       else {
         return ConstantInt::get(Type::getInt32Ty(seq_type->getContext()), 0);
       }
     }
   }
-  
+
   if(m_is_64_bit) {
 
     if(!seq_type->getElementType()->isSized()){
@@ -2774,8 +2776,8 @@ createFaultBlock (Function * F) {
 // not necessary to check.
 
 
-void 
-SoftBoundCETSPass::addLoadStoreChecks(Instruction* load_store, 
+void
+SoftBoundCETSPass::addLoadStoreChecks(Instruction* load_store,
                                       std::map<Value*, int>& FDCE_map) {
 
   if(!spatial_safety)
@@ -2783,7 +2785,7 @@ SoftBoundCETSPass::addLoadStoreChecks(Instruction* load_store,
 
   SmallVector<Value*, 8> args;
   Value* pointer_operand = NULL;
-    
+
   if(isa<LoadInst>(load_store)) {
     if(!LOADCHECKS)
       return;
@@ -2792,18 +2794,18 @@ SoftBoundCETSPass::addLoadStoreChecks(Instruction* load_store,
     assert(ldi && "not a load instruction");
     pointer_operand = ldi->getPointerOperand();
   }
-    
+
   if(isa<StoreInst>(load_store)){
     if(!STORECHECKS)
       return;
-      
+
     StoreInst* sti = dyn_cast<StoreInst>(load_store);
     assert(sti && "not a store instruction");
     // The pointer where the element is being stored is the second
     // operand
     pointer_operand = sti->getOperand(1);
   }
-    
+
   assert(pointer_operand && "pointer operand null?");
 
   if(!disable_spatial_check_opt){
@@ -4368,7 +4370,9 @@ SoftBoundCETSPass::freeFunctionKeyLock(Function* func, Value* & func_key,
     assert(0 && "inconsistent key lock");
   }
 
+#if 0
   Function::iterator  bb_begin = func->begin();
+#endif
   Instruction* next_inst = NULL;
 
   for(Function::iterator b = func->begin(), be = func->end(); b != be ; ++b) {
@@ -4826,9 +4830,10 @@ void SoftBoundCETSPass::handleLoad(LoadInst* load_inst) {
     // Introduce a series of metadata loads and associated it pointers
     if(!isa<PointerType>(vector_ty->getElementType()))
        return;
-    
+#if 0
     Value* load_inst_value = load_inst;
-    Instruction* load = load_inst;    
+    Instruction* load = load_inst;
+#endif
 
     Value* pointer_operand = load_inst->getPointerOperand();
     Instruction* insert_at = getNextInstruction(load_inst);
