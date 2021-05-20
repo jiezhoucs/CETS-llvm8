@@ -4430,9 +4430,12 @@ bool SoftBoundCETSPass::checkTypeHasPtrs(Argument* ptr_argument){
     return false;
 
   SequentialType* seq_type = dyn_cast<SequentialType>(ptr_argument->getType());
-  assert(seq_type && "byval attribute with non-sequential type pointer, not handled?");
+  PointerType *PtrTy = dyn_cast<PointerType>(ptr_argument->getType());
+  assert((seq_type || PtrTy) &&
+      "byval attribute with non-sequential or non-pointer type pointer, not handled?");
 
-  StructType* struct_type = dyn_cast<StructType>(seq_type->getElementType());
+  StructType* struct_type = dyn_cast<StructType>(
+      seq_type ? seq_type->getElementType() : PtrTy->getElementType());
 
   if(struct_type){
     bool has_ptrs = checkPtrsInST(struct_type);
@@ -4442,8 +4445,8 @@ bool SoftBoundCETSPass::checkTypeHasPtrs(Argument* ptr_argument){
     assert(0 && "non-struct byval parameters?");
   }
 
-  // By default we assume any struct can return pointers 
-  return true;                                              
+  // By default we assume any struct can return pointers
+  return true;
 
 }
 
@@ -4455,14 +4458,14 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
   Value* func_lock = NULL;
   Value* func_xmm_key_lock = NULL;
   int arg_count= 0;
-    
+
   //    std::cerr<<"transforming function with name:"<<func->getName()<< "\n";
   /* Scan over the pointer arguments and introduce base and bound */
 
   for(Function::arg_iterator ib = func->arg_begin(), ie = func->arg_end();
       ib != ie; ++ib) {
 
-    if(!isa<PointerType>(ib->getType())) 
+    if(!isa<PointerType>(ib->getType()))
       continue;
 
     /* it is a pointer, so increment the arg count */
@@ -4471,19 +4474,19 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
     Argument* ptr_argument = dyn_cast<Argument>(ib);
     Value* ptr_argument_value = ptr_argument;
     Instruction* fst_inst = &*func->begin()->begin();
-      
+
     /* Urgent: Need to think about what we need to do about byval attributes */
     if(ptr_argument->hasByValAttr()){
-      
+
       if(checkTypeHasPtrs(ptr_argument)){
         assert(0 && "Pointer argument has byval attributes and the underlying structure returns pointers");
       }
-      
+
       if(spatial_safety){
         associateBaseBound(ptr_argument_value, m_void_null_ptr, m_infinite_bound_ptr);
       }
       if(temporal_safety){
-        Value* func_temp_lock = getAssociatedFuncLock(&*func->begin()->begin());      
+        Value* func_temp_lock = getAssociatedFuncLock(&*func->begin()->begin());
         associateKeyLock(ptr_argument_value, m_constantint64ty_one, func_temp_lock);
       }
     }
@@ -4503,7 +4506,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
     }
   }
 #endif
-  
+
 
   /* WorkList Algorithm for propagating the base and bound. Each
    * basic block is visited only once. We start by visiting the
@@ -4529,7 +4532,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
       continue;
     }
     /* If here implies basic block not visited */
-      
+
     /* Insert the block into the set of visited blocks */
     bb_visited.insert(bb);
 
@@ -4542,14 +4545,14 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
       assert(next_bb && "Not a basic block and I am adding to the base and bound worklist?");
       bb_worklist.push(next_bb);
     }
-      
+
     for(BasicBlock::iterator i = bb->begin(), ie = bb->end(); i != ie; ++i){
       Value* v1 = dyn_cast<Value>(i);
       Instruction* new_inst = dyn_cast<Instruction>(i);
 
 
       /* If the instruction is not present in the original, no
-       * instrumentaion 
+       * instrumentaion
        */
       if(!m_present_in_original.count(v1)) {
         continue;
@@ -4561,7 +4564,6 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
        */
 
       switch(new_inst->getOpcode()) {
-        
       case Instruction::Alloca:
         {
           AllocaInst* alloca_inst = dyn_cast<AllocaInst>(v1);
@@ -4572,7 +4574,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
 
       case Instruction::Load:
         {
-          LoadInst* load_inst = dyn_cast<LoadInst>(v1);            
+          LoadInst* load_inst = dyn_cast<LoadInst>(v1);
           assert(load_inst && "Not a Load inst?");
           handleLoad(load_inst);
         }
@@ -4585,7 +4587,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
           handleGEP(gep_inst);
         }
         break;
-	
+
       case BitCastInst::BitCast:
         {
           BitCastInst* bitcast_inst = dyn_cast<BitCastInst>(v1);
@@ -4603,7 +4605,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
         }
         /* PHINode ends */
         break;
-        
+
       case Instruction::Call:
         {
           CallInst* call_inst = dyn_cast<CallInst>(v1);
@@ -4641,7 +4643,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
           handleReturnInst(ret);
         }
         break;
-	
+
       case Instruction::ExtractElement:
 	{
 	  ExtractElementInst * EEI = dyn_cast<ExtractElementInst>(v1);
@@ -4657,7 +4659,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
 	  handleExtractValue(EVI);
 	}
 	break;
-        
+
       default:
         if(isa<PointerType>(v1->getType()))
           assert(!isa<PointerType>(v1->getType())&&
@@ -4669,7 +4671,7 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
   if(temporal_safety){
     freeFunctionKeyLock(func, func_key, func_lock, func_xmm_key_lock);
   }
-   
+
 }
 
 /* isByValDerived: This function check whether loaded address is
@@ -4805,20 +4807,20 @@ void SoftBoundCETSPass::insertMetadataLoad(LoadInst* load_inst){
  * bound for for the pointer from the shadow space
  */
 
-void SoftBoundCETSPass::handleLoad(LoadInst* load_inst) { 
+void SoftBoundCETSPass::handleLoad(LoadInst* load_inst) {
 
 
   if(!isa<VectorType>(load_inst->getType()) && !isa<PointerType>(load_inst->getType())){
     return;
   }
-  
+
   if(isa<PointerType>(load_inst->getType())){
     insertMetadataLoad(load_inst);
     return;
   }
- 
+
   if(isa<VectorType>(load_inst->getType())){
-    
+
     if(!spatial_safety || !temporal_safety){
       assert(0 && "Loading and Storing Pointers as a first-class types");            
       return;
@@ -5174,7 +5176,8 @@ bool SoftBoundCETSPass::runOnModule(Module& module) {
               func_ptr->getName()<<"\n");
       }
 
-    }    
+    }
   }
+
   return true;
 }
