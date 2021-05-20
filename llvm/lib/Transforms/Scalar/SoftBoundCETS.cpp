@@ -2457,9 +2457,9 @@ SoftBoundCETSPass::getAssociatedBound(Value* pointer_operand) {
 }
 
 
-Value*
+Value* 
 SoftBoundCETSPass::getAssociatedKey(Value* pointer_operand) {
-
+    
   if(!temporal_safety){
     return NULL;
   }
@@ -2471,9 +2471,9 @@ SoftBoundCETSPass::getAssociatedKey(Value* pointer_operand) {
   if(!m_pointer_key.count(pointer_operand)){
     pointer_operand->dump();
   }
-  assert(m_pointer_key.count(pointer_operand) &&
+  assert(m_pointer_key.count(pointer_operand) && 
          "Key absent. Try compiling with -simplifycfg option?");
-
+    
   Value* pointer_key = m_pointer_key[pointer_operand];
   assert(pointer_key && "key present in the map but null?");
 
@@ -5146,17 +5146,14 @@ bool SoftBoundCETSPass::runOnModule(Module& module) {
     //
 
     if (temporal_safety) {
-      Value* func_global_lock =
+      Value* func_global_lock = 
         introduceGlobalLockFunction(&*func_ptr->begin()->begin());
-      m_func_global_lock[func_ptr->getName()] = func_global_lock;
+      m_func_global_lock[func_ptr->getName()] = func_global_lock;      
     }
-
-    if (spatial_safety) {
-      gatherBaseBoundPass1(func_ptr);
-      gatherBaseBoundPass2(func_ptr);
-    }
-
-    addDereferenceChecks(func_ptr);
+      
+    gatherBaseBoundPass1(func_ptr);
+    gatherBaseBoundPass2(func_ptr);
+    addDereferenceChecks(func_ptr);            
   }
 
 
