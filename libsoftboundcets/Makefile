@@ -2,13 +2,13 @@
 # For building the softboundcets library
 #
 
-all: softboundcets_rt
-
-CC = clang
-
-CFLAGS=-g -Wall -pedantic  -D__SOFTBOUNDCETS_SPATIAL_TEMPORAL -O3 -fno-strict-aliasing
-# CFLAGS=-Wall -pedantic  -D__SOFTBOUNDCETS_TEMPORAL -O3 -fno-strict-aliasing
+BIN = ../../build/bin
+CC = $(BIN)/clang
+CFLAGS= -g -Wall -pedantic  -D__SOFTBOUNDCETS_TEMPORAL -O3 -fno-strict-aliasing \
+		-Wno-unused-variable
 ARFLAGS=-rcs
+
+all: softboundcets_rt
 
 # If LLVM_GOLD is set, also build a library for use with LTO
 #
