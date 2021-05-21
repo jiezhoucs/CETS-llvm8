@@ -440,12 +440,6 @@ void PassManagerBuilder::populateModulePassManager(
   // Allow forcing function attributes as a debugging and tuning aid.
   MPM.add(createForceFunctionAttrsLegacyPass());
 
-  // SoftBoundCETS
-  if (EnableSoftBoundCETS) {
-    MPM.add(new InitializeSoftBoundCETS());
-    MPM.add(new SoftBoundCETSPass());
-  }
-
   // If all optimizations are disabled, just run the always-inline pass and,
   // if enabled, the function merging pass.
   if (OptLevel == 0) {
@@ -765,6 +759,13 @@ void PassManagerBuilder::populateModulePassManager(
     // Rename anon globals to be able to handle them in the summary
     MPM.add(createNameAnonGlobalPass());
   }
+
+  // SoftBoundCETS
+  if (EnableSoftBoundCETS) {
+    MPM.add(new InitializeSoftBoundCETS());
+    MPM.add(new SoftBoundCETSPass());
+  }
+
 }
 
 void PassManagerBuilder::addLTOOptimizationPasses(legacy::PassManagerBase &PM) {
