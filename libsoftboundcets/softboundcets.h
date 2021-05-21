@@ -1279,6 +1279,7 @@ __WEAK_INLINE void __softboundcets_check_remove_from_free_map(size_t ptr_key, vo
   return;
 }
 
+#ifdef __SOFTBOUNDCETS_SPATIAL_TEMPORAL
  __METADATA_INLINE void __softboundcets_metadata_load_vector(void* addr_of_ptr,
 							     void** base,
 							     void** bound,
@@ -1308,6 +1309,7 @@ __WEAK_INLINE void __softboundcets_check_remove_from_free_map(size_t ptr_key, vo
 
  }
 
+#endif
 
 #endif
 
