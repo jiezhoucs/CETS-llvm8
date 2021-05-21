@@ -1,4 +1,4 @@
-//=== SoftBoundRuntime/softboundcets-checks.c - Helper for the SoftBound+CETS Runtime --*- C -*===// 
+//=== SoftBoundRuntime/softboundcets-checks.c - Helper for the SoftBound+CETS Runtime --*- C -*===//
 // Copyright (c) 2011 Santosh Nagarakatte, Milo M. K. Martin. All rights reserved.
 
 // Developed by: Santosh Nagarakatte, Milo M.K. Martin,
