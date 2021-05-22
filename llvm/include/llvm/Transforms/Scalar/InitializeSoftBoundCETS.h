@@ -20,7 +20,7 @@ class InitializeSoftBoundCETS: public ModulePass {
  private:
   bool spatial_safety;
   bool temporal_safety;
-  
+
  public:
   bool runOnModule(Module &);
   static char ID;
@@ -29,11 +29,11 @@ class InitializeSoftBoundCETS: public ModulePass {
   void constructMetadataHandlers(Module &);
   void constructShadowStackHandlers(Module &);
   void constructAuxillaryFunctionHandlers(Module &);
-  InitializeSoftBoundCETS(): ModulePass(ID){        
+  InitializeSoftBoundCETS(): ModulePass(ID){
     spatial_safety = true;
     temporal_safety= true;
   }
-  
+
   StringRef getPassName() const { return "InitializeSoftBoundCETS";}
 };
 

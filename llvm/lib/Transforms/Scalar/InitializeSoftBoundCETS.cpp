@@ -1,4 +1,4 @@
-//=== SoftBoundCETS/InitializeSoftBound.cpp - Helper Pass for SoftBound/CETS --*- C++ -*===// 
+//=== SoftBoundCETS/InitializeSoftBound.cpp - Helper Pass for SoftBound/CETS --*- C++ -*===//
 // Copyright (c) 2014 Santosh Nagarakatte, Milo M. K. Martin. All rights reserved.
 
 // Developed by: Santosh Nagarakatte, Milo M.K. Martin,
@@ -61,7 +61,7 @@ extern cl::opt<bool> disable_temporal_safety;
 
 char InitializeSoftBoundCETS :: ID = 0;
 
-static RegisterPass<InitializeSoftBoundCETS> P 
+static RegisterPass<InitializeSoftBoundCETS> P
 ("InitializeSoftBoundCETS","Prototype Creator Pass for SoftBoundCETS");
 
 void InitializeSoftBoundCETS:: constructShadowStackHandlers(Module & module){
@@ -363,10 +363,10 @@ bool InitializeSoftBoundCETS:: runOnModule (Module& module){
   if(disable_temporal_safety){
     temporal_safety = false;
   }
-  
+
   constructCheckHandlers(module);
   constructShadowStackHandlers(module);
-  constructMetadataHandlers(module); 
+  constructMetadataHandlers(module);
   //  constructAuxillaryFunctionHandlers(module);
   return true;
 }
