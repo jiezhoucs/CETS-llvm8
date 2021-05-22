@@ -4478,9 +4478,21 @@ void SoftBoundCETSPass::gatherBaseBoundPass1 (Function * func) {
     /* Urgent: Need to think about what we need to do about byval attributes */
     if(ptr_argument->hasByValAttr()){
 
+      // Jie Zhou: the next if guard was added by Zhou, without which the
+      // assertion would fail for the gravsub() function of Olden's bh benchmark.
+      // For grabsub(), the second argument is a struct (copy by value), and
+      // for some reason LLVM generates a pointer to the struct type and
+      // gives it the byval attribute. Therefore it does not really need
+      // a key. I do not know if there are any other cases where a pointer
+      // argument has a byval attribute. The comment made by the original authors
+      // seems to indicate that they do not know how to handle the case when
+      // the pointed type has pointers in it.
+      // For now we just skip bh; we'll worry about it later if time permits.
+#if 1
       if(checkTypeHasPtrs(ptr_argument)){
         assert(0 && "Pointer argument has byval attributes and the underlying structure returns pointers");
       }
+#endif
 
       if(spatial_safety){
         associateBaseBound(ptr_argument_value, m_void_null_ptr, m_infinite_bound_ptr);
