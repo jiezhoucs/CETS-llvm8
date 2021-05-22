@@ -4821,12 +4821,18 @@ void SoftBoundCETSPass::handleLoad(LoadInst* load_inst) {
 
   if(isa<VectorType>(load_inst->getType())){
 
+    // Jie Zhou: The following if guard was added by Zhou. The original code
+    // is confusing: why does it abort if either type of mem check is off?
+    // Without turning off this block the assertion would be triggered
+    // when compiling the old_main() function of Olden's bh; the load instruction
+    // is "%27 = load <2 x double>, <2 x double>* %13, align 16, !dbg !206, !tbaa !173".
+#if 0
     if(!spatial_safety || !temporal_safety){
-      assert(0 && "Loading and Storing Pointers as a first-class types");            
-      return;
+      assert(0 && "Loading and Storing Pointers as a first-class types");
     }
+#endif
 
-    
+
     // It should be a vector if here
     const VectorType* vector_ty = dyn_cast<VectorType>(load_inst->getType());
     // Introduce a series of metadata loads and associated it pointers
@@ -4839,11 +4845,11 @@ void SoftBoundCETSPass::handleLoad(LoadInst* load_inst) {
 
     Value* pointer_operand = load_inst->getPointerOperand();
     Instruction* insert_at = getNextInstruction(load_inst);
-        
-    Value* pointer_operand_bitcast =  castToVoidPtr(pointer_operand, insert_at);      
+    Value* pointer_operand_bitcast =  castToVoidPtr(pointer_operand, insert_at);
+
     Instruction* first_inst_func = dyn_cast<Instruction>(load_inst->getParent()->getParent()->begin()->begin());
     assert(first_inst_func && "function doesn't have any instruction and there is load???");
-   
+
     uint64_t num_elements = vector_ty->getNumElements();
 
     
