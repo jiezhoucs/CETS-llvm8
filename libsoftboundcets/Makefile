@@ -4,11 +4,13 @@
 
 BIN = ../../build/bin
 CC = $(BIN)/clang
-CFLAGS= -g -Wall -pedantic  -D__SOFTBOUNDCETS_TEMPORAL -O3 -fno-strict-aliasing \
+CFLAGS= -Wall -pedantic  -D__SOFTBOUNDCETS_TEMPORAL -O3 -fno-strict-aliasing \
 		-Wno-unused-variable
+AR=$(BIN)/llvm-ar
 ARFLAGS=-rcs
 
 all: softboundcets_rt
+lto: softboundcets_rt_lto
 
 # If LLVM_GOLD is set, also build a library for use with LTO
 #
@@ -25,13 +27,14 @@ OBJ = $(SRC:%.c=%.o)
 
 softboundcets_rt: $(SRC)
 	$(CC) $(CFLAGS) -fPIC -c $^
-	ar $(ARFLAGS) lib$@.a $(OBJ)
-	clang -fPIC -shared -o lib$@.so $(OBJ)
+	$(AR) $(ARFLAGS) lib$@.a $(OBJ)
+	$(CC) -fPIC -shared -o lib$@.so $(OBJ)
 
 softboundcets_rt_lto: $(SRC)
-	mkdir lto
-	clang $(CFLAGS) -flto -c $^
-	ar --plugin=$(LLVM_GOLD) $(ARFLAGS) lto/libsoftboundcets_rt.a lto/softboundcets.lto.o lto/softboundcets-checks.lto.o lto/softboundcets-wrappers.lto.o
+	rm -r lto; mkdir lto
+	$(CC) $(CFLAGS) -flto -c $^
+	mv $(OBJ) lto/
+	$(AR) $(ARFLAGS) lto/libsoftboundcets_rt.a lto/*.o
 
 
 clean:
