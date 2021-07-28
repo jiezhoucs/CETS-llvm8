@@ -165,7 +165,7 @@ static const size_t __SOFTBOUNDCETS_N_GLOBAL_LOCK_SIZE = ((size_t) 1024 * (size_
 static const size_t __SOFTBOUNDCETS_TRIE_PRIMARY_TABLE_ENTRIES = ((size_t) 8*(size_t) 1024 * (size_t) 1024);
 static const size_t __SOFTBOUNDCETS_SHADOW_STACK_ENTRIES = ((size_t) 128 * (size_t) 32 );
 /* 256 Million simultaneous objects */
-static const size_t __SOFTBOUNDCETS_N_FREE_MAP_ENTRIES = ((size_t) 32 * (size_t) 1024* (size_t) 1024);
+static const size_t __SOFTBOUNDCETS_N_FREE_MAP_ENTRIES = ((size_t) 256 * (size_t) 1024* (size_t) 1024);
 // each secondary entry has 2^ 22 entries
 static const size_t __SOFTBOUNDCETS_TRIE_SECONDARY_TABLE_ENTRIES = ((size_t) 4 * (size_t) 1024 * (size_t) 1024);
 
@@ -183,7 +183,7 @@ static const size_t __SOFTBOUNDCETS_TRIE_PRIMARY_TABLE_ENTRIES = ((size_t) 8*(si
 static const size_t __SOFTBOUNDCETS_SHADOW_STACK_ENTRIES = ((size_t) 128 * (size_t) 32 );
 
 /* 256 Million simultaneous objects */
-static const size_t __SOFTBOUNDCETS_N_FREE_MAP_ENTRIES = ((size_t) 32 * (size_t) 1024* (size_t) 1024);
+static const size_t __SOFTBOUNDCETS_N_FREE_MAP_ENTRIES = ((size_t) 256 * (size_t) 1024* (size_t) 1024);
 // each secondary entry has 2^ 22 entries
 static const size_t __SOFTBOUNDCETS_TRIE_SECONDARY_TABLE_ENTRIES = ((size_t) 4 * (size_t) 1024 * (size_t) 1024);
 
