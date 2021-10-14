@@ -2756,10 +2756,10 @@ createFaultBlock (Function * F) {
   LLVMContext & Context = F->getContext();
   Module * M = F->getParent();
 
-  M->getOrInsertFunction("__softboundcets_dummy", Type::getVoidTy(Context), NULL);
+  M->getOrInsertFunction("__softboundcets_dummy", Type::getVoidTy(Context));
   CallInst::Create(M->getFunction("__softboundcets_dummy"), "", UI);
 
-  M->getOrInsertFunction ("__softboundcets_abort", Type::getVoidTy (Context), NULL);
+  M->getOrInsertFunction ("__softboundcets_abort", Type::getVoidTy (Context));
   CallInst::Create (M->getFunction ("__softboundcets_abort"), "", UI);
 
   return faultBB;
