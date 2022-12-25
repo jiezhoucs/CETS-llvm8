@@ -31,7 +31,7 @@ softboundcets_rt: $(SRC)
 	$(CC) -fPIC -shared -o lib$@.so $(OBJ)
 
 softboundcets_rt_lto: $(SRC)
-	rm -r lto; mkdir lto
+	rm -rf lto; mkdir lto
 	$(CC) $(CFLAGS) -flto -c $^
 	mv $(OBJ) lto/
 	$(AR) $(ARFLAGS) lto/libsoftboundcets_rt.a lto/*.o
