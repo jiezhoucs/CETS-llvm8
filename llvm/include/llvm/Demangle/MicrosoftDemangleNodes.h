@@ -5,6 +5,9 @@
 #include "llvm/Demangle/StringView.h"
 #include <array>
 
+#include <stdint.h>
+#include <string>
+
 class OutputStream;
 
 namespace llvm {
